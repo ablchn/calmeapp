@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Calme">
+  <meta name="theme-color" content="#0f1117">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Calme — Anti-stress</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #161820;
+      --bg3: #1e2028;
+      --surface: #22242e;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #f0efe8;
+      --text2: #9896a0;
+      --text3: #5a5866;
+      --teal: #4ecba4;
+      --teal-dim: rgba(78,203,164,0.12);
+      --purple: #9d8df1;
+      --purple-dim: rgba(157,141,241,0.12);
+      --coral: #f08060;
+      --coral-dim: rgba(240,128,96,0.12);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+    /* APP SHELL */
+    .app { display: flex; flex-direction: column; height: 100%; padding-top: var(--safe-top); }
+
+    /* HEADER */
+    .header { padding: 18px 24px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.3px; }
+    .header-sub { font-size: 11px; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px; }
+    .breath-indicator { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--teal); display: flex; align-items: center; justify-content: center; }
+    .breath-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); animation: pulse-slow 4s ease-in-out infinite; }
+    @keyframes pulse-slow { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.6} }
+
+    /* NAV TABS */
+    .nav { display: flex; padding: 0 16px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; background: var(--bg); }
+    .nav-btn { flex: 1; padding: 11px 4px; font-size: 12px; color: var(--text3); border: none; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: color 0.2s; position: relative; font-family: 'DM Sans', sans-serif; }
+    .nav-btn.active { color: var(--text); }
+    .nav-btn.active::after { content: ''; position: absolute; bottom: 0; left: 25%; right: 25%; height: 2px; border-radius: 2px 2px 0 0; background: var(--teal); }
+    .nav-icon { font-size: 18px; }
+
+    /* SCROLL AREA */
+    .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(20px + var(--safe-bottom)); }
+    .scroll::-webkit-scrollbar { display: none; }
+
+    /* VIEWS */
+    .view { display: none; padding: 20px 16px; }
+    .view.active { display: block; }
+
+    /* HOME VIEW */
+    .greeting { margin-bottom: 24px; }
+    .greeting h2 { font-family: 'DM Serif Display', serif; font-size: 28px; line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .greeting p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    .stress-check { background: var(--surface); border-radius: 16px; padding: 18px; margin-bottom: 20px; border: 0.5px solid var(--border); }
+    .stress-check label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); display: block; margin-bottom: 12px; }
+    .stress-slider { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--bg3); outline: none; cursor: pointer; }
+    .stress-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--teal); cursor: pointer; box-shadow: 0 0 0 4px var(--teal-dim); }
+    .stress-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text3); }
+    .stress-value { text-align: center; margin-top: 8px; font-size: 13px; color: var(--teal); font-weight: 500; }
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .quick-card { background: var(--surface); border-radius: 14px; padding: 16px 14px; border: 0.5px solid var(--border); cursor: pointer; transition: transform 0.15s, border-color 0.15s; active:opacity: 0.8; }
+    .quick-card:active { transform: scale(0.97); }
+    .quick-card-icon { font-size: 22px; margin-bottom: 8px; }
+    .quick-card-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .quick-card-sub { font-size: 11px; color: var(--text2); }
+    .quick-card.teal { border-color: rgba(78,203,164,0.2); }
+    .quick-card.purple { border-color: rgba(157,141,241,0.2); }
+    .quick-card.coral { border-color: rgba(240,128,96,0.2); }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 12px; }
+    .stat-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .stat-box { flex: 1; background: var(--surface); border-radius: 12px; padding: 14px 12px; border: 0.5px solid var(--border); text-align: center; }
+    .stat-num { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--teal); }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* TECHNIQUES VIEW */
+    .filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-pill { padding: 7px 14px; border-radius: 50px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+    .filter-pill.active { background: var(--teal); border-color: var(--teal); color: #0f1117; font-weight: 500; }
+    .tech-card { background: var(--surface); border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 0.5px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
+    .tech-card.open { border-color: var(--border2); }
+    .tech-card-head { display: flex; align-items: center; gap: 12px; }
+    .tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tech-dot.teal { background: var(--teal); }
+    .tech-dot.purple { background: var(--purple); }
+    .tech-dot.coral { background: var(--coral); }
+    .tech-info { flex: 1; }
+    .tech-name { font-size: 15px; font-weight: 500; }
+    .tech-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .tech-chevron { color: var(--text3); font-size: 12px; transition: transform 0.25s; }
+    .tech-card.open .tech-chevron { transform: rotate(180deg); }
+    .tech-body { display: none; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+    .tech-card.open .tech-body { display: block; }
+    .tech-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; }
+    .step-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+    .step-num.teal { background: var(--teal-dim); color: var(--teal); }
+    .step-num.purple { background: var(--purple-dim); color: var(--purple); }
+    .step-num.coral { background: var(--coral-dim); color: var(--coral); }
+    .step-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .timer-area { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+    .timer-btn { padding: 8px 18px; border-radius: 50px; border: 0.5px solid var(--border2); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+    .timer-btn.running { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+    .timer-text { font-size: 14px; font-weight: 500; color: var(--teal); min-width: 50px; }
+    .prog-bar { height: 3px; border-radius: 2px; background: var(--bg3); margin-top: 10px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 2px; background: var(--teal); transition: width 1s linear; width: 0%; }
+    .prog-fill.purple { background: var(--purple); }
+    .prog-fill.coral { background: var(--coral); }
+
+    /* BREATHE VIEW */
+    .breathe-center { display: flex; flex-direction: column; align-items: center; padding: 30px 20px; }
+    .breathe-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; text-align: center; letter-spacing: -0.3px; }
+    .breathe-sub { font-size: 13px; color: var(--text2); margin-bottom: 40px; text-align: center; }
+    .breathe-circle { width: 200px; height: 200px; border-radius: 50%; border: 1.5px solid rgba(78,203,164,0.3); display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 32px; }
+    .breathe-inner { width: 120px; height: 120px; border-radius: 50%; background: var(--teal-dim); border: 1.5px solid rgba(78,203,164,0.4); display: flex; align-items: center; justify-content: center; }
+    .breathe-label { font-size: 14px; color: var(--teal); font-weight: 500; text-align: center; line-height: 1.4; }
+    .breathe-phase { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .breathe-outer-ring { position: absolute; inset: -16px; border-radius: 50%; border: 1px solid rgba(78,203,164,0.1); }
+    .breathe-controls { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 280px; }
+    .breathe-start { width: 100%; padding: 14px; border-radius: 50px; background: var(--teal); border: none; color: #0f1117; font-size: 15px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+    .breathe-start:active { opacity: 0.85; }
+    .breathe-pattern { display: flex; gap: 8px; width: 100%; }
+    .pat-btn { flex: 1; padding: 10px 6px; border-radius: 10px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center; transition: all 0.15s; }
+    .pat-btn.active { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+    .breathe-count { font-size: 13px; color: var(--text2); }
+
+    /* JOURNAL VIEW */
+    .journal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 6px; }
+    .journal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+    .journal-prompts { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .prompt-card { background: var(--surface); border-radius: 14px; padding: 16px; border: 0.5px solid var(--border); }
+    .prompt-q { font-size: 13px; color: var(--text2); margin-bottom: 8px; font-style: italic; }
+    .prompt-input { width: 100%; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; resize: none; outline: none; line-height: 1.6; min-height: 70px; }
+    .prompt-input::placeholder { color: var(--text3); }
+    .prompt-input:focus { border-color: var(--border2); }
+    .save-btn { width: 100%; padding: 14px; border-radius: 50px; background: var(--surface); border: 0.5px solid var(--border2); color: var(--text); font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+    .save-btn:active { background: var(--bg3); }
+    .saved-msg { text-align: center; font-size: 13px; color: var(--teal); margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
+    .saved-msg.show { opacity: 1; }
+
+    /* BREATHING ANIMATION */
+    @keyframes expand { 0%{transform:scale(1)} 100%{transform:scale(1.5)} }
+    @keyframes hold { 0%,100%{transform:scale(1.5)} }
+    @keyframes contract { 0%{transform:scale(1.5)} 100%{transform:scale(1)} }
+    .breathe-inner.anim-in { animation: expand var(--in-dur) ease-in-out forwards; }
+    .breathe-inner.anim-hold { animation: hold var(--hold-dur) ease-in-out forwards; }
+    .breathe-inner.anim-out { animation: contract var(--out-dur) ease-in-out forwards; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="header-title">Calme</div>
+      <div class="header-sub">Gestion du stress</div>
+    </div>
+    <div class="breath-indicator">
+      <div class="breath-dot"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showView('home', this)">
+      <span class="nav-icon">⌂</span>
+      <span>Accueil</span>
+    </button>
+    <button class="nav-btn" onclick="showView('techniques', this)">
+      <span class="nav-icon">✦</span>
+      <span>Techniques</span>
+    </button>
+    <button class="nav-btn" onclick="showView('breathe', this)">
+      <span class="nav-icon">◯</span>
+      <span>Respirer</span>
+    </button>
+    <button class="nav-btn" onclick="showView('journal', this)">
+      <span class="nav-icon">✏</span>
+      <span>Journal</span>
+    </button>
+  </nav>
+
+  <div class="scroll">
+
+    <!-- HOME -->
+    <div class="view active" id="view-home">
+      <div class="greeting">
+        <h2 id="greeting-text">Bonne journée.</h2>
+        <p>Comment te sens-tu en ce moment ?</p>
+      </div>
+
+      <div class="stress-check">
+        <label>Niveau de stress maintenant</label>
+        <input type="range" class="stress-slider" min="1" max="10" value="5" id="stress-slider" oninput="updateStress(this.value)">
+        <div class="stress-labels"><span>Calme</span><span>Modéré</span><span>Élevé</span></div>
+        <div class="stress-value" id="stress-val">Niveau 5 — Modéré</div>
+      </div>
+
+      <div class="section-title">Recommandé maintenant</div>
+      <div class="quick-grid" id="recommendations">
+        <div class="quick-card teal" onclick="showView('breathe', document.querySelectorAll('.nav-btn')[2])">
+          <div class="quick-card-icon">◯</div>
+          <div class="quick-card-title">Respiration</div>
+          <div class="quick-card-sub">2 min · Rapide</div>
+        </div>
+        <div class="quick-card purple" onclick="openTech(3)">
+          <div class="quick-card-icon">⊙</div>
+          <div class="quick-card-title">Scan corporel</div>
+          <div class="quick-card-sub">3 min · Fatigue</div>
+        </div>
+        <div class="quick-card coral" onclick="openTech(1)">
+          <div class="quick-card-icon">✦</div>
+          <div class="quick-card-title">Vider le mental</div>
+          <div class="quick-card-sub">3 min · Travail</div>
+        </div>
+        <div class="quick-card" onclick="showView('journal', document.querySelectorAll('.nav-btn')[3])">
+          <div class="quick-card-icon">✏</div>
+          <div class="quick-card-title">Journal</div>
+          <div class="quick-card-sub">5 min · Clarté</div>
+        </div>
+      </div>
+
+      <div class="section-title">Cette semaine</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-sessions">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-minutes">0</div>
+          <div class="stat-label">Minutes</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-streak">0</div>
+          <div class="stat-label">Jours de suite</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECHNIQUES -->
+    <div class="view" id="view-techniques">
+      <div class="section-title" style="margin-bottom:16px;">6 techniques · &lt; 5 min</div>
+      <div class="filter-row">
+        <button class="filter-pill active" onclick="filterTech('all', this)">Toutes</button>
+        <button class="filter-pill" onclick="filterTech('health', this)">Santé</button>
+        <button class="filter-pill" onclick="filterTech('work', this)">Travail</button>
+        <button class="filter-pill" onclick="filterTech('family', this)">Relations</button>
+      </div>
+      <div id="tech-list"></div>
+    </div>
+
+    <!-- BREATHE -->
+    <div class="view" id="view-breathe">
+      <div class="breathe-center">
+        <div class="breathe-title">Respiration guidée</div>
+        <div class="breathe-sub">Choisis un rythme et suis le cercle</div>
+        <div class="breathe-circle">
+          <div class="breathe-outer-ring"></div>
+          <div class="breathe-inner" id="breathe-inner">
+            <div>
+              <div class="breathe-label" id="breathe-label">Prêt</div>
+              <div class="breathe-phase" id="breathe-phase">Appuie pour commencer</div>
+            </div>
+          </div>
+        </div>
+        <div class="breathe-controls">
+          <div class="breathe-pattern">
+            <button class="pat-btn active" onclick="setPattern('4-7-8', this)">4-7-8<br><span style="font-size:10px;color:inherit">Anxiété</span></button>
+            <button class="pat-btn" onclick="setPattern('box', this)">Carré<br><span style="font-size:10px;color:inherit">Focus</span></button>
+            <button class="pat-btn" onclick="setPattern('calm', this)">4-4<br><span style="font-size:10px;color:inherit">Calme</span></button>
+          </div>
+          <button class="breathe-start" id="breathe-btn" onclick="toggleBreathe()">Commencer</button>
+          <div class="breathe-count" id="breathe-count"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="view" id="view-journal">
+      <div class="journal-title">Journal du soir</div>
+      <div class="journal-sub">3 questions pour vider ton mental avant de dormir.</div>
+      <div class="journal-prompts">
+        <div class="prompt-card">
+          <div class="prompt-q">Qu'est-ce qui m'a le plus pesé aujourd'hui ?</div>
+          <textarea class="prompt-input" placeholder="Écris librement..." id="j1"></textarea>
+        </div>
+        <div class="prompt-card">
+          <div class="prompt-q">Une chose pour laquelle je suis reconnaissant(e) ?</div>
+          <textarea class="prompt-input" placeholder="Même quelque chose de petit..." id="j2"></textarea>
+        </div>
+        <div class="prompt-card">
+          <div class="prompt-q">Ce dont j'ai besoin demain pour aller mieux ?</div>
+          <textarea class="prompt-input" placeholder="Un besoin concret..." id="j3"></textarea>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveJournal()">Enregistrer l'entrée</button>
+      <div class="saved-msg" id="saved-msg">✓ Entrée sauvegardée</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const TECHNIQUES = [
+    { id:0, cat:'health', color:'purple', title:'Respiration 4-7-8', time:'2 min', desc:'Active le système nerveux parasympathique et réduit l\'anxiété physique en quelques cycles.', steps:['Expire complètement par la bouche.','Inspire par le nez pendant 4 secondes.','Retiens ta respiration 7 secondes.','Expire lentement par la bouche pendant 8 secondes.','Répète 3 à 4 cycles.'], sec:120 },
+    { id:1, cat:'work', color:'teal', title:'Vider le mental sur papier', time:'3 min', desc:'Externaliser les pensées parasites libère la bande passante cognitive et réduit la surcharge.', steps:['Prends une feuille ou ouvre une note.','Note tout ce qui tourne en boucle sans filtrer.','Ajoute 1 chiffre de priorité (1,2,3) à chaque item.','Ferme la note — ton cerveau sait que c\'est enregistré.'], sec:180 },
+    { id:2, cat:'family', color:'coral', title:'Pause de désescalade', time:'2 min', desc:'Après une tension, une mini-pause permet de redescendre avant de répondre.', steps:['Dis calmement : "J\'ai besoin de 2 minutes, je reviens."','Éloigne-toi physiquement.','Fais 5 respirations lentes, abdominales.','Demande-toi : "Quel est mon vrai besoin ?"'], sec:120 },
+    { id:3, cat:'health', color:'purple', title:'Scan corporel rapide', time:'3 min', desc:'Repérer les tensions physiques permet de les relâcher consciemment.', steps:['Ferme les yeux, 2 respirations profondes.','Descends du sommet du crâne vers les épaules.','Repère les zones tendues : mâchoire, nuque, ventre.','À chaque zone, expire et relâche consciemment.','Termine par les pieds bien ancrés.'], sec:180 },
+    { id:4, cat:'work', color:'teal', title:'Règle du "une seule chose"', time:'1 min', desc:'Face à la surcharge, choisir UNE tâche prioritaire brise l\'effet paralysant.', steps:['Ferme tous les onglets inutiles.','Demande-toi : "Si je ne fais qu\'une chose, c\'est laquelle ?"','Écris-la en gros devant toi.','Lance-toi pour 25 minutes sans interruption.'], sec:60 },
+    { id:5, cat:'family', color:'coral', title:'Message en 3 parties', time:'2 min', desc:'Exprimer ses émotions de façon structurée évite l\'escalade.', steps:['"Quand tu... je ressens... parce que..."','Ex : "Quand tu rentres sans prévenir, je me sens stressé car j\'avais prévu autre chose."','Termine par un besoin concret.','Dis-le calmement, une fois, sans répéter.'], sec:120 }
+  ];
+
+  const timers = {};
+  let currentFilter = 'all';
+
+  function showView(id, btn) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-'+id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function updateStress(v) {
+    const labels = ['','Très calme','Calme','Léger','Léger','Modéré','Modéré','Tendu','Tendu','Élevé','Très élevé'];
+    document.getElementById('stress-val').textContent = 'Niveau ' + v + ' — ' + labels[v];
+  }
+
+  function renderTechniques() {
+    const list = document.getElementById('tech-list');
+    const filtered = currentFilter === 'all' ? TECHNIQUES : TECHNIQUES.filter(t => t.cat === currentFilter);
+    list.innerHTML = filtered.map(t => `
+      <div class="tech-card" id="tc-${t.id}" onclick="toggleTech(${t.id})">
+        <div class="tech-card-head">
+          <span class="tech-dot ${t.color}"></span>
+          <div class="tech-info">
+            <div class="tech-name">${t.title}</div>
+            <div class="tech-meta">${catLabel(t.cat)} · ${t.time}</div>
+          </div>
+          <span class="tech-chevron">▾</span>
+        </div>
+        <div class="tech-body">
+          <div class="tech-desc">${t.desc}</div>
+          ${t.steps.map((s,i) => `<div class="step-item"><span class="step-num ${t.color}">${i+1}</span><span class="step-text">${s}</span></div>`).join('')}
+          <div class="timer-area">
+            <button class="timer-btn" id="tbtn-${t.id}" onclick="startTimer(event,${t.id},${t.sec})">Lancer (${fmt(t.sec)})</button>
+            <span class="timer-text" id="tdis-${t.id}"></span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill ${t.color}" id="tprog-${t.id}"></div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  function catLabel(c) { return {work:'Travail',health:'Santé',family:'Relations'}[c]; }
+  function fmt(s) { return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+  function filterTech(cat, btn) {
+    currentFilter = cat;
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    renderTechniques();
+  }
+
+  function toggleTech(id) {
+    const card = document.getElementById('tc-'+id);
+    card.classList.toggle('open');
+  }
+
+  function openTech(id) {
+    showView('techniques', document.querySelectorAll('.nav-btn')[1]);
+    setTimeout(() => {
+      const card = document.getElementById('tc-'+id);
+      if (card) { card.classList.add('open'); card.scrollIntoView({behavior:'smooth'}); }
+    }, 50);
+  }
+
+  function startTimer(e, id, total) {
+    e.stopPropagation();
+    if (timers[id]) { clearInterval(timers[id]); delete timers[id]; document.getElementById('tbtn-'+id).textContent = 'Lancer ('+fmt(total)+')'; document.getElementById('tbtn-'+id).classList.remove('running'); document.getElementById('tdis-'+id).textContent=''; document.getElementById('tprog-'+id).style.width='0%'; return; }
+    let rem = total;
+    const btn = document.getElementById('tbtn-'+id);
+    btn.textContent = 'Arrêter'; btn.classList.add('running');
+    document.getElementById('tdis-'+id).textContent = fmt(rem);
+    document.getElementById('tprog-'+id).style.width='0%';
+    timers[id] = setInterval(() => {
+      rem--;
+      document.getElementById('tdis-'+id).textContent = fmt(rem);
+      document.getElementById('tprog-'+id).style.width = Math.round((1-rem/total)*100)+'%';
+      if (rem <= 0) {
+        clearInterval(timers[id]); delete timers[id];
+        document.getElementById('tdis-'+id).textContent = '✓ Terminé';
+        btn.textContent = 'Relancer'; btn.classList.remove('running');
+        let stats = JSON.parse(localStorage.getItem('calme-stats')||'{"s":0,"m":0}');
+        stats.s++; stats.m += Math.round(total/60);
+        localStorage.setItem('calme-stats', JSON.stringify(stats));
+        loadStats();
+      }
+    },1000);
+  }
+
+  // BREATHE
+  const PATTERNS = {
+    '4-7-8': {in:4,hold:7,out:8},
+    'box': {in:4,hold:4,out:4,hold2:4},
+    'calm': {in:4,hold:0,out:4}
+  };
+  let breatheActive = false;
+  let breatheInterval = null;
+  let currentPattern = '4-7-8';
+  let breatheCycles = 0;
+
+  function setPattern(p, btn) {
+    currentPattern = p;
+    document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (breatheActive) { stopBreathe(); }
+  }
+
+  function toggleBreathe() {
+    breatheActive ? stopBreathe() : startBreathe();
+  }
+
+  function stopBreathe() {
+    breatheActive = false;
+    if (breatheInterval) { clearTimeout(breatheInterval); breatheInterval = null; }
+    const inner = document.getElementById('breathe-inner');
+    inner.className = 'breathe-inner';
+    document.getElementById('breathe-label').textContent = 'Prêt';
+    document.getElementById('breathe-phase').textContent = 'Appuie pour commencer';
+    document.getElementById('breathe-btn').textContent = 'Commencer';
+    document.getElementById('breathe-count').textContent = '';
+    breatheCycles = 0;
+  }
+
+  function startBreathe() {
+    breatheActive = true;
+    breatheCycles = 0;
+    document.getElementById('breathe-btn').textContent = 'Arrêter';
+    runCycle();
+  }
+
+  function runCycle() {
+    if (!breatheActive) return;
+    const p = PATTERNS[currentPattern];
+    const inner = document.getElementById('breathe-inner');
+    const label = document.getElementById('breathe-label');
+    const phase = document.getElementById('breathe-phase');
+
+    function phase1() {
+      if (!breatheActive) return;
+      inner.style.setProperty('--in-dur', p.in+'s');
+      inner.className = 'breathe-inner anim-in';
+      label.textContent = 'Inspire';
+      phase.textContent = p.in + ' secondes';
+      countdown(p.in, label, 'Inspire', () => {
+        if (!breatheActive) return;
+        if (p.hold > 0) phase2(); else phase3();
+      });
+    }
+    function phase2() {
+      inner.style.setProperty('--hold-dur', p.hold+'s');
+      inner.className = 'breathe-inner anim-hold';
+      label.textContent = 'Retiens';
+      phase.textContent = p.hold + ' secondes';
+      countdown(p.hold, label, 'Retiens', phase3);
+    }
+    function phase3() {
+      if (!breatheActive) return;
+      inner.style.setProperty('--out-dur', p.out+'s');
+      inner.className = 'breathe-inner anim-out';
+      label.textContent = 'Expire';
+      phase.textContent = p.out + ' secondes';
+      countdown(p.out, label, 'Expire', () => {
+        if (!breatheActive) return;
+        breatheCycles++;
+        document.getElementById('breathe-count').textContent = breatheCycles + ' cycle' + (breatheCycles>1?'s':'') + ' complété' + (breatheCycles>1?'s':'');
+        if (breatheCycles < 4) runCycle();
+        else { stopBreathe(); document.getElementById('breathe-label').textContent = 'Bien joué'; document.getElementById('breathe-phase').textContent = '4 cycles terminés'; }
+      });
+    }
+    phase1();
+  }
+
+  let countdownTimer = null;
+  function countdown(secs, el, label, cb) {
+    let s = secs;
+    el.textContent = label + ' ' + s;
+    countdownTimer = setInterval(() => {
+      s--;
+      if (!breatheActive) { clearInterval(countdownTimer); return; }
+      if (s <= 0) { clearInterval(countdownTimer); el.textContent = label; cb(); }
+      else el.textContent = label + ' ' + s;
+    }, 1000);
+  }
+
+  // JOURNAL
+  function saveJournal() {
+    const entry = { date: new Date().toISOString(), j1: document.getElementById('j1').value, j2: document.getElementById('j2').value, j3: document.getElementById('j3').value };
+    const entries = JSON.parse(localStorage.getItem('calme-journal')||'[]');
+    entries.push(entry);
+    localStorage.setItem('calme-journal', JSON.stringify(entries));
+    const msg = document.getElementById('saved-msg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+    document.getElementById('j1').value = '';
+    document.getElementById('j2').value = '';
+    document.getElementById('j3').value = '';
+  }
+
+  function loadStats() {
+    const stats = JSON.parse(localStorage.getItem('calme-stats')||'{"s":0,"m":0}');
+    document.getElementById('stat-sessions').textContent = stats.s;
+    document.getElementById('stat-minutes').textContent = stats.m;
+  }
+
+  function setGreeting() {
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Bonjour.' : h < 18 ? 'Bon après-midi.' : 'Bonne soirée.';
+    document.getElementById('greeting-text').textContent = g;
+  }
+
+  setGreeting();
+  loadStats();
+  renderTechniques();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+</script>
+</body>
+</html>
